@@ -1,5 +1,9 @@
 credentials:
   usernames:
+    jaden:
+      name: Jaden
+      password: "$2b$12$agXk.S8XQ.XgR2mP1GMdm.ylYuje03h7Ib/H0gc9JbOWQft.tRcjK" #hello!123
+      role: user
     bobbert:
       name: psvtechbobby@gmail.com
       password: "$2b$12$aKMKyWMvl078z1aYoV4OS.q/xNQ2nkTRdPt9JIItaTEoHgQaBTOXq" #bobbypellam123
