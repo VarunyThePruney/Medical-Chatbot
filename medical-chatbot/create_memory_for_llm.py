@@ -19,6 +19,7 @@ def load_pdf_files(data):
     return documents
 
 documents=load_pdf_files(data=DATA_PATH)
+print(documents)
 #print("Length of PDF pages: ", len(documents))
 
 

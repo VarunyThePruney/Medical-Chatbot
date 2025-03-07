@@ -1,10 +1,12 @@
 import streamlit as st
 import streamlit_authenticator as stauth
 import yaml
+from networkx.conftest import needs_numpy
 from yaml.loader import SafeLoader
 import os
 from google.cloud import speech
 from pydub import AudioSegment
+from fpdf import FPDF
 
 # Load YAML config for auth
 with open("config.yaml") as file:
@@ -17,10 +19,19 @@ authenticator = stauth.Authenticate(
         config["cookie"]["expiry_days"],
     )
 
+st.markdown(
+    """
+    <style>
+    .title {
+        text-align: center;
+    }
+    </style>
+    <h1 class="title">CodeMedix </h1>
+    """,
+    unsafe_allow_html=True
+)
+
 name, auth_status, username = authenticator.login("Login", "main")
-
-
-
 
 # Set the path to your Google Cloud service account key
 # credentials_path = "C:\Users\srira\OneDrive\Documents\codemedix-14732eb7cdc9.json"
@@ -83,13 +94,55 @@ def transcribe_audio_chunk(chunk_file):
 
     return "\n".join(transcripts)
 
+import os
+
+# Function to get the next available file number
+def get_file_number():
+    counter_file = "counter.txt"
+
+    # Ensure counter file exists, or create it with a starting value of 1
+    if not os.path.exists(counter_file):
+        with open(counter_file, "w") as f:
+            f.write("1")
+        return 1  # Start from 1
+
+    try:
+        with open(counter_file, "r") as f:
+            content = f.read().strip()
+
+        # Ensure content is a valid integer
+        last_number = int(content) if content.isdigit() else 0
+    except Exception as e:
+        print(f"Error reading counter file: {e}")
+        last_number = 0  # Default to 0 if there's an issue
+
+    new_number = last_number + 1  # Increment the counter
+
+    # Write the updated counter back to the file
+    with open(counter_file, "w") as f:
+        f.write(str(new_number))
+
+    return new_number  # Return a valid number
+
+
+def generate_pdf(transcript):
+    pdf = FPDF()  # ✅ Create an instance of FPDF
+    pdf.set_auto_page_break(auto=True, margin=15)  # ✅ Call method on the instance
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(0, 10, transcript)
+
+    file_number = get_file_number()
+    pdf_file = f"{file_number}_claim.pdf"
+    pdf.output(pdf_file)
+
+    return pdf_file
+
+
 # Streamlit interface
 def main():
     if auth_status is False:
         st.error("Authentication Failed")
-
-    if auth_status is None:
-        st.warning("Please login first")
 
     if auth_status:
         st.sidebar.success(f"Welcome, {name}!")
@@ -135,9 +188,19 @@ def main():
             st.subheader("Full Transcript:")
             st.text_area("Transcription", full_transcript, height=600)
 
+            pdf_file = generate_pdf(full_transcript)
+            with open(pdf_file, "rb") as f:
+                st.download_button(
+                    label="Download PDF",
+                    data=f,
+                    file_name=pdf_file,
+                    mime="application/pdf",
+                )
+
             # Clean up
             os.remove("temp_audio.mp3")
             os.remove(flac_file)
+            os.remove(pdf_file)
 
 
 
