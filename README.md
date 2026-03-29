@@ -17,6 +17,11 @@ The system performs:
 This enables automated generation of structured clinical documentation from voice recordings.
 
 ---
+## Demo Video
+
+https://youtu.be/0hWyQqSqvto
+
+---
 
 ## Features
 
