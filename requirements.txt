@@ -1,0 +1,12 @@
+fpdf==1.7.2
+langchain==1.2.13
+langchain_community==0.4.1
+langchain_core==1.2.23
+langchain_huggingface==1.2.1
+protobuf==7.34.1
+pydub==0.25.1
+python-dotenv==1.2.2
+PyYAML==6.0.2
+PyYAML==6.0.3
+streamlit==1.42.2
+streamlit_authenticator==0.2.1
