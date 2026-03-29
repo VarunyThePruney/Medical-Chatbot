@@ -13,7 +13,7 @@ from langchain_huggingface import HuggingFaceEndpoint
 #load_dotenv(find_dotenv())
 
 
-DB_FAISS_PATH="vectorstore/db_faiss"
+DB_FAISS_PATH= "vectorstore/db_faiss"
 @st.cache_resource
 def get_vectorstore():
     embedding_model=HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
