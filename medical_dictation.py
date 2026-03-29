@@ -1,12 +1,16 @@
 import streamlit as st
 import streamlit_authenticator as stauth
 import yaml
-from networkx.conftest import needs_numpy
 from yaml.loader import SafeLoader
 import os
 from google.cloud import speech
 from pydub import AudioSegment
 from fpdf import FPDF
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_core.prompts import PromptTemplate
+from langchain_huggingface import HuggingFaceEndpoint
+from langchain.chains import RetrievalQA
 
 # Load YAML config for auth
 with open("config.yaml") as file:
@@ -34,7 +38,7 @@ st.markdown(
 name, auth_status, username = authenticator.login("Login", "main")
 
 
-credentials_path = r"/Users/varunsai/Documents/codemedix-14732eb7cdc9.json"
+client = speech.SpeechClient()
 
 client = speech.SpeechClient.from_service_account_file(credentials_path)
 
@@ -92,8 +96,6 @@ def transcribe_audio_chunk(chunk_file):
 
     return "\n".join(transcripts)
 
-import os
-
 def get_file_number():
     counter_file = "counter.txt"
 
@@ -146,19 +148,7 @@ def save_pdf(content, file_path):
     # Save the PDF to the specified file path
     pdf.output(file_path)
 
-import os
-import streamlit as st
-
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.chains import RetrievalQA
-
-from langchain_community.vectorstores import FAISS
-from langchain_core.prompts import PromptTemplate
-from langchain_huggingface import HuggingFaceEndpoint
-
-
-
-DB_FAISS_PATH="vectorstore/db_faiss"
+DB_FAISS_PATH= "vectorstore/db_faiss"
 @st.cache_resource
 def get_vectorstore():
     embedding_model=HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
@@ -179,8 +169,6 @@ def load_llm(huggingface_repo_id, HF_TOKEN):
                       "max_length":"512"}
     )
     return llm
-
-
 
 # Streamlit interface
 def main():
@@ -232,9 +220,8 @@ def main():
 
             pdf_file = generate_pdf(full_transcript)
 
-
-
-            save_pdf(full_transcript, "/Users/varunsai/PycharmProjects/Entre-project/medical-chatbot/data/test.pdf")
+            os.makedirs("data", exist_ok=True)
+            save_pdf(full_transcript, "data/test.pdf")
             st.subheader("Processing through LLM:")
 
             from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
@@ -280,6 +267,7 @@ def main():
             # Step 4: Store embeddings in FAISS
             DB_FAISS_PATH = "vectorstore/db_faiss"
             db = FAISS.from_documents(text_chunks, embedding_model)
+            os.makedirs("vectorstore", exist_ok=True)
             db.save_local(DB_FAISS_PATH)
 
             # Clean up
@@ -343,9 +331,12 @@ def main():
 
                     HUGGINGFACE_REPO_ID = "mistralai/Mistral-7B-Instruct-v0.3"
                     HF_TOKEN = os.environ.get("HF_TOKEN")
+                    if HF_TOKEN is None:
+                        st.error("HF_TOKEN not found in environment variables")
+                        return
 
                     try:
-                        vectorstore = get_vectorstore()
+                        vectorstore = db
                         if vectorstore is None:
                             st.error("Failed to load the vector store")
 
